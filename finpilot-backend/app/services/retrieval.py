@@ -45,3 +45,32 @@ def retrieve(query: str, top_k: int = 5, filename: Optional[str] = None) -> List
         )
         for point in result.points
     ]
+
+def get_all_chunks(filename: Optional[str] = None) -> List[RetrievedChunk]:
+    client = get_qdrant_client()
+
+    existing = [c.name for c in client.get_collections().collections]
+    if settings.QDRANT_COLLECTION not in existing:
+        return []
+
+    query_filter = None
+    if filename:
+        from qdrant_client.models import Filter, FieldCondition, MatchValue
+        query_filter = Filter(must=[FieldCondition(key="filename", match=MatchValue(value=filename))])
+
+    points, _ = client.scroll(
+        collection_name=settings.QDRANT_COLLECTION,
+        scroll_filter=query_filter,
+        limit=1000,
+    )
+
+    return [
+        RetrievedChunk(
+            chunk_id=(p.payload or {}).get("chunk_id", ""),
+            text=(p.payload or {}).get("text", ""),
+            chunk_type=(p.payload or {}).get("chunk_type", ""),
+            filename=(p.payload or {}).get("filename", ""),
+            score=1.0,
+        )
+        for p in points
+    ]

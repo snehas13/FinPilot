@@ -13,15 +13,45 @@ Statement excerpts:
 
 def generate_answer(query: str, context: str) -> str:
     from groq import Groq
+    from typing import Any, cast
 
     client = Groq(api_key=settings.GROQ_API_KEY)
     response = client.chat.completions.create(
         model=settings.GROQ_MODEL,
-        messages=[
+        messages=cast(Any, [
             {"role": "system", "content": RAG_SYSTEM_PROMPT.format(context=context)},
             {"role": "user", "content": query},
-        ],
+        ]),
         temperature=0.2,
+        max_tokens=500,
+    )
+    return response.choices[0].message.content or ""
+
+CHAT_SYSTEM_PROMPT = """You are FinPilot AI, a friendly financial coach.
+You have access to the user's financial summary and relevant statement excerpts below.
+Use them to answer naturally, referencing real numbers where relevant.
+If something isn't covered by the data provided, say so rather than guessing.
+Never recommend specific financial products or give licensed financial advice —
+offer general planning guidance instead.
+
+Financial context:
+{context}
+"""
+
+
+def chat_completion(messages: list, context: str) -> str:
+    from groq import Groq
+    from typing import Any, cast
+
+    client = Groq(api_key=settings.GROQ_API_KEY)
+    full_messages = [
+        {"role": "system", "content": CHAT_SYSTEM_PROMPT.format(context=context)}
+    ] + messages
+
+    response = client.chat.completions.create(
+        model=settings.GROQ_MODEL,
+        messages=cast(Any, full_messages),
+        temperature=0.3,
         max_tokens=500,
     )
     return response.choices[0].message.content or ""

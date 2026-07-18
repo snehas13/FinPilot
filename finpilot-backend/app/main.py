@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.routers import upload
 from app.routers import upload, analyze
+from app.routers import upload, analyze, chat
 
 app = FastAPI(title=settings.APP_NAME, version="0.1.0")
 
@@ -17,6 +18,8 @@ app.add_middleware(
 app.include_router(upload.router, prefix="/upload", tags=["upload"])
 
 app.include_router(analyze.router, prefix="/analyze", tags=["analyze"])
+
+app.include_router(chat.router, prefix="/chat", tags=["chat"])
 
 @app.get("/health")
 def health():
