@@ -43,6 +43,17 @@ def store_chunks(chunks: List[Chunk]) -> int:
     client = get_qdrant_client()
     ensure_collection(client)
 
+    # Delete any existing points for this filename first — makes re-uploading
+    # the same statement idempotent instead of accumulating duplicates.
+    filenames = {c.metadata.get("filename", "") for c in chunks}
+    for fname in filenames:
+        if fname:
+            from qdrant_client.models import Filter, FieldCondition, MatchValue
+            client.delete(
+                collection_name=settings.QDRANT_COLLECTION,
+                points_selector=Filter(must=[FieldCondition(key="filename", match=MatchValue(value=fname))]),
+            )
+
     texts = [c.text for c in chunks]
     vectors = embed_texts(texts)
 

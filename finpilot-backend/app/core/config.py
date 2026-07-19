@@ -29,6 +29,8 @@ class Settings:
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
     GROQ_MODEL: str = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
+    LLM_BACKEND: str = os.getenv("LLM_BACKEND", "groq")
+
     def __init__(self):
         # Ensure the upload directory exists
         self.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
