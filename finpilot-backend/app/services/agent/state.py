@@ -11,6 +11,7 @@ class GoalPlanState(TypedDict, total=False):
     # --- input ---
     goal_text: str            # raw user input, e.g. "I want to save 1,50,000 for a vacation"
     filename: Optional[str]   # which uploaded statement to use for context
+    monthly_income_override: Optional[float]  # user-provided income, preferred over statement parsing
 
     # --- set by classify_goal ---
     goal_type: str            # "vacation" | "emergency_fund" | "purchase" | "retirement" | "other"

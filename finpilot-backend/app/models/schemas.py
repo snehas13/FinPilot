@@ -61,3 +61,21 @@ class FinancialSummaryResponse(BaseModel):
     category_breakdown: List[CategorySpendOut]
     transaction_count: int
     income_is_estimated: bool
+
+class GoalPlanRequest(BaseModel):
+    goal_text: str
+    filename: Optional[str] = None
+    monthly_income_override: Optional[float] = None
+
+
+class GoalPlanResponse(BaseModel):
+    goal_type: str
+    target_amount: float
+    target_months: int
+    monthly_saving_required: float
+    recommendations: List[str]
+    narrative: str
+    is_feasible: bool
+    confidence_level: str
+    validation_notes: str
+    retry_count: int
