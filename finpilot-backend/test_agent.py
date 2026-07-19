@@ -12,7 +12,7 @@ print("Statement embedded and stored.\n")
 
 # Step 2: run the agent graph
 initial_state = {
-    "goal_text": "I want to save Rs 50,50,000 for a vacation in 12 months",
+    "goal_text": "I want to save Rs 1,50,000 for a vacation in 12 months",
     "filename": "sample_statement.pdf",
     "errors": [],
 }
