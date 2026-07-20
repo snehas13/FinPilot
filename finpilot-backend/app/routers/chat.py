@@ -3,6 +3,11 @@ from fastapi import APIRouter
 from app.services.retrieval import retrieve, get_all_chunks
 from app.services.llm import chat_completion
 from app.services.financial_summary import compute_summary
+from app.services.guardrails import (
+    check_context_sufficiency,
+    apply_response_guardrails,
+    INSUFFICIENT_CONTEXT_MESSAGE,
+)
 from app.models.schemas import (
     ChatRequest,
     ChatResponse,
@@ -12,7 +17,6 @@ from app.models.schemas import (
 
 router = APIRouter()
 
-
 @router.post("", response_model=ChatResponse)
 async def chat(req: ChatRequest):
     last_user_message = next(
@@ -21,18 +25,16 @@ async def chat(req: ChatRequest):
 
     retrieved = retrieve(last_user_message, top_k=req.top_k, filename=req.filename)
 
-    if not retrieved:
-        return ChatResponse(
-            answer="I don't have enough information yet — please upload a statement first.",
-            sources=[],
-        )
+    if not check_context_sufficiency(len(retrieved)):
+        return ChatResponse(answer=INSUFFICIENT_CONTEXT_MESSAGE, sources=[])
 
     context = "\n\n".join(f"[chunk_id={c.chunk_id}]\n{c.text}" for c in retrieved)
     history = [{"role": m.role, "content": m.content} for m in req.messages]
     answer = chat_completion(history, context)
 
-    return ChatResponse(answer=answer, sources=[c.chunk_id for c in retrieved])
+    report = apply_response_guardrails(answer, context)
 
+    return ChatResponse(answer=report.final_text, sources=[c.chunk_id for c in retrieved])
 
 @router.get("/summary", response_model=FinancialSummaryResponse)
 async def chat_summary(filename: str | None = None):

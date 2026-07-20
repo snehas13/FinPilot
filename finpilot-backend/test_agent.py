@@ -2,6 +2,7 @@ from app.services.pdf_extraction import extract_pdf
 from app.services.chunking import chunk_extraction
 from app.services.embedding import store_chunks
 from app.services.agent.graph import goal_plan_graph_v1
+from app.services.guardrails import check_numeric_consistency, check_advice_boundary, check_context_sufficiency
 
 # Step 1: make sure there's statement data in Qdrant to retrieve against
 # (skip this block if you've already uploaded a statement via the running server)
@@ -32,3 +33,12 @@ print("is_feasible:", final_state["is_feasible"])
 print("narrative:", final_state["plan_narrative"])
 print("monthly_income:", final_state["monthly_income"])
 print("monthly_expenses:", final_state["monthly_expenses"])
+
+source = "12 Jun 2024 Zomato Order #4821 Rs. 530.00"
+r = check_numeric_consistency("You spent Rs. 9999 on Zomato.", source)
+print(r.passed, r.flagged_numbers)  # False ['9999']
+
+r2 = check_advice_boundary("You should invest in the HDFC Top 100 fund.")
+print(r2.passed, r2.matched_phrases)  # False ['You should invest']
+
+print(check_context_sufficiency(0))  # False

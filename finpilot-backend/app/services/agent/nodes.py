@@ -8,6 +8,7 @@ from app.services.agent.state import GoalPlanState
 from app.services.llm import extract_goal_details, generate_plan_narrative
 from app.services.retrieval import get_all_chunks
 from app.services.financial_summary import compute_summary
+from app.services.guardrails import check_numeric_consistency
 
 # Categories treated as fixed/non-discretionary — never suggested as cuts.
 FIXED_CATEGORIES = {"Rent", "Bills & Utilities"}
@@ -150,6 +151,21 @@ def generate_plan(state: GoalPlanState) -> GoalPlanState:
             surplus=surplus,
             recommendations="; ".join(recommendations),
         )
+        # Guardrail 1: verify the narrative doesn't state any figure that
+        # isn't one of our own known, calculated values.
+        known_facts = (
+            f"{target_amount} {target_months} {monthly_saving_required} "
+            f"{surplus} {'; '.join(recommendations)}"
+        )
+        numeric_check = check_numeric_consistency(narrative, known_facts)
+        if not numeric_check.passed:
+            errors = errors + [
+                f"generate_plan narrative flagged unverified numbers: {numeric_check.flagged_numbers}"
+            ]
+            narrative = (
+                f"To reach your {state.get('goal_type', 'goal')} goal of Rs. {target_amount:.0f} "
+                f"in {target_months} months, you'll need to save Rs. {monthly_saving_required:.0f}/month."
+            )
     except Exception as e:
         narrative = ""
         errors = errors + [f"generate_plan narrative failed: {e}"]
