@@ -1,6 +1,8 @@
 package com.user.finpilot.view
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -17,6 +19,9 @@ fun GoalPlannerCreateScreen(navController: NavHostController) {
     var goalText by remember { mutableStateOf("") }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
+        IconButton(onClick = { navController.popBackStack() }) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+        }
         Text("Goal Planner", style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(16.dp))
         OutlinedTextField(

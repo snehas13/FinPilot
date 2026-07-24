@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.user.finpilot.domain.TokenStore
 
 data class SettingsItem(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
 
@@ -20,7 +21,7 @@ private val settingsItems = listOf(
 )
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(navController: androidx.navigation.NavHostController) {
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         Card(Modifier.fillMaxWidth()) {
             Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -41,8 +42,13 @@ fun ProfileScreen() {
             )
         }
         Spacer(Modifier.weight(1f))
-        TextButton(onClick = { /* TODO: logout logic */ }) {
-            Text("Logout", color = MaterialTheme.colorScheme.error)
+        TextButton(onClick = {
+            TokenStore.clear()
+            navController.navigate("login") {
+                popUpTo(0)  // clear the entire back stack — no returning to Home via back button
+            }
+        }) {
+            Text("Logout", color = MaterialTheme.colorScheme.primary)
         }
     }
 }

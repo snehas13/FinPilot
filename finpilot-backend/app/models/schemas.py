@@ -67,7 +67,6 @@ class GoalPlanRequest(BaseModel):
     filename: Optional[str] = None
     monthly_income_override: Optional[float] = None
 
-
 class GoalPlanResponse(BaseModel):
     goal_type: str
     target_amount: float
@@ -79,3 +78,18 @@ class GoalPlanResponse(BaseModel):
     confidence_level: str
     validation_notes: str
     retry_count: int
+
+class SignupRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    username: str

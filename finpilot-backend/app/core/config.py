@@ -31,6 +31,13 @@ class Settings:
 
     LLM_BACKEND: str = os.getenv("LLM_BACKEND", "groq")
 
+    # Auth
+    # In production this MUST be set via env var — never ship the default.
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "dev-only-change-me-before-deploying")
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRE_MINUTES: int = int(os.getenv("JWT_EXPIRE_MINUTES", "10080"))  # 7 days
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./finpilot.db")
+
     def __init__(self):
         # Ensure the upload directory exists
         self.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)

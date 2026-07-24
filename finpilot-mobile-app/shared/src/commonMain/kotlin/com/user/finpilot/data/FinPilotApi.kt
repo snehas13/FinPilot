@@ -7,6 +7,9 @@ import com.user.finpilot.domain.ChatResponse
 import com.user.finpilot.domain.FinancialSummaryResponse
 import com.user.finpilot.domain.GoalPlanRequest
 import com.user.finpilot.domain.GoalPlanResponse
+import com.user.finpilot.domain.LoginRequest
+import com.user.finpilot.domain.SignupRequest
+import com.user.finpilot.domain.TokenResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.*
@@ -17,7 +20,7 @@ class FinPilotApi(
     private val client: HttpClient = createHttpClient(),
     // 10.0.2.2 is the Android emulator's alias for your host machine's localhost.
     // Swap to your Cloud Run URL once Day 14 deployment is live.
-    private val baseUrl: String = "http://10.0.2.2:8000",
+    private val baseUrl: String = "http://192.168.68.107:8000",
 ) {
     suspend fun analyze(req: AnalyzeRequest): AnalyzeResponse =
         client.post("$baseUrl/analyze") {
@@ -42,7 +45,15 @@ class FinPilotApi(
             setBody(req)
         }.body()
 
-    // Multipart upload needs platform file bytes — implemented in Day 9's
-    // upload screen using Ktor's MultiPartFormDataContent directly there,
-    // since it needs the Android-specific file picker result.
+    suspend fun signup(req: SignupRequest): TokenResponse =
+        client.post("$baseUrl/auth/signup") {
+            contentType(ContentType.Application.Json)
+            setBody(req)
+        }.body()
+
+    suspend fun login(req: LoginRequest): TokenResponse =
+        client.post("$baseUrl/auth/login") {
+            contentType(ContentType.Application.Json)
+            setBody(req)
+        }.body()
 }

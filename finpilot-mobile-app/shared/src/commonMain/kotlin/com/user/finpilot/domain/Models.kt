@@ -82,6 +82,19 @@ data class GoalPlanRequest(
 )
 
 @Serializable
+data class SignupRequest(val username: String, val password: String)
+
+@Serializable
+data class LoginRequest(val username: String, val password: String)
+
+@Serializable
+data class TokenResponse(
+    val access_token: String,
+    val token_type: String = "bearer",
+    val username: String,
+)
+
+@Serializable
 data class GoalPlanResponse(
     val goal_type: String,
     val target_amount: Double,

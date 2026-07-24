@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,7 +20,7 @@ import androidx.navigation.compose.rememberNavController
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     object Home : Screen("home", "Home", Icons.Filled.Home)
-    object Chat : Screen("chat", "Chat", Icons.Filled.Chat)
+    object Chat : Screen("chat", "Chat", Icons.AutoMirrored.Filled.Chat)
     object Goals : Screen("goals", "Goals", Icons.Filled.TrackChanges)
     object Profile : Screen("profile", "Profile", Icons.Filled.Person)
 }
@@ -40,18 +41,25 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun FinPilotApp() {
     val navController = rememberNavController()
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+
     Scaffold(
-        bottomBar = { FinPilotBottomBar(navController) }
+        // Hide the bottom nav bar on the login screen — it shouldn't be
+        // reachable before authenticating.
+        bottomBar = { if (currentRoute != "login") FinPilotBottomBar(navController) }
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = "login",
             modifier = Modifier.padding(padding),
         ) {
-            composable(Screen.Home.route) { HomeDashboardScreen() }
+            composable("login") { LoginScreen(navController) }
+            composable(Screen.Home.route) { HomeDashboardScreen(navController) }
             composable(Screen.Chat.route) { ChatScreen() }
             composable(Screen.Goals.route) { GoalPlannerCreateScreen(navController) }
-            composable(Screen.Profile.route) { ProfileScreen() }
+            composable(Screen.Profile.route) { ProfileScreen(navController) }
+            composable("upload") { StatementUploadScreen(navController) }
         }
     }
 }
