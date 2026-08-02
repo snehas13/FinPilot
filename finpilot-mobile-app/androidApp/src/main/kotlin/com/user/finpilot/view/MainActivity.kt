@@ -17,6 +17,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.user.finpilot.ui.theme.FinPilotTheme
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     object Home : Screen("home", "Home", Icons.Filled.Home)
@@ -31,7 +32,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            FinPilotTheme {
                 FinPilotApp()
             }
         }
@@ -60,6 +61,7 @@ fun FinPilotApp() {
             composable(Screen.Goals.route) { GoalPlannerCreateScreen(navController) }
             composable(Screen.Profile.route) { ProfileScreen(navController) }
             composable("upload") { StatementUploadScreen(navController) }
+            composable("admin") { AdminScreen(navController) }
         }
     }
 }

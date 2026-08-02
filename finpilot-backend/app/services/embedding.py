@@ -36,22 +36,23 @@ def embed_texts(texts: List[str]) -> List[List[float]]:
     return [vec.tolist() for vec in embedder.embed(texts)]
 
 
-def store_chunks(chunks: List[Chunk]) -> int:
+def store_chunks(chunks: List[Chunk], user_id: int | None = None, username: str | None = None) -> int:
     if not chunks:
         return 0
 
     client = get_qdrant_client()
     ensure_collection(client)
 
-    # Delete any existing points for this filename first — makes re-uploading
-    # the same statement idempotent instead of accumulating duplicates.
     filenames = {c.metadata.get("filename", "") for c in chunks}
     for fname in filenames:
         if fname:
             from qdrant_client.models import Filter, FieldCondition, MatchValue
+            must = [FieldCondition(key="filename", match=MatchValue(value=fname))]
+            if user_id is not None:
+                must.append(FieldCondition(key="user_id", match=MatchValue(value=user_id)))
             client.delete(
                 collection_name=settings.QDRANT_COLLECTION,
-                points_selector=Filter(must=[FieldCondition(key="filename", match=MatchValue(value=fname))]),
+                points_selector=Filter(must=must),
             )
 
     texts = [c.text for c in chunks]
@@ -67,6 +68,8 @@ def store_chunks(chunks: List[Chunk]) -> int:
                 "text": c.text,
                 "transaction_count": c.transaction_count,
                 "filename": c.metadata.get("filename", ""),
+                "user_id": user_id,
+                "username": username or "",
             },
         )
         for c, vec in zip(chunks, vectors)

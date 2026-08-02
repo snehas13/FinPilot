@@ -14,7 +14,7 @@ class RetrievedChunk:
     score: float
 
 
-def retrieve(query: str, top_k: int = 5, filename: Optional[str] = None) -> List[RetrievedChunk]:
+def retrieve(query: str, top_k: int = 5, filename: Optional[str] = None, user_id: Optional[int] = None) -> List[RetrievedChunk]:
     client = get_qdrant_client()
 
     existing = [c.name for c in client.get_collections().collections]
@@ -24,9 +24,16 @@ def retrieve(query: str, top_k: int = 5, filename: Optional[str] = None) -> List
     query_vector = embed_texts([query])[0]
 
     query_filter = None
+    must = []
     if filename:
         from qdrant_client.models import Filter, FieldCondition, MatchValue
-        query_filter = Filter(must=[FieldCondition(key="filename", match=MatchValue(value=filename))])
+        must.append(FieldCondition(key="filename", match=MatchValue(value=filename)))
+    if user_id is not None:
+        from qdrant_client.models import Filter, FieldCondition, MatchValue
+        must.append(FieldCondition(key="user_id", match=MatchValue(value=user_id)))
+    if must:
+        from qdrant_client.models import Filter
+        query_filter = Filter(must=must)
 
     result = client.query_points(
         collection_name=settings.QDRANT_COLLECTION,
@@ -46,7 +53,7 @@ def retrieve(query: str, top_k: int = 5, filename: Optional[str] = None) -> List
         for point in result.points
     ]
 
-def get_all_chunks(filename: Optional[str] = None) -> List[RetrievedChunk]:
+def get_all_chunks(filename: Optional[str] = None, user_id: Optional[int] = None) -> List[RetrievedChunk]:
     client = get_qdrant_client()
 
     existing = [c.name for c in client.get_collections().collections]
@@ -54,9 +61,16 @@ def get_all_chunks(filename: Optional[str] = None) -> List[RetrievedChunk]:
         return []
 
     query_filter = None
+    must = []
     if filename:
         from qdrant_client.models import Filter, FieldCondition, MatchValue
-        query_filter = Filter(must=[FieldCondition(key="filename", match=MatchValue(value=filename))])
+        must.append(FieldCondition(key="filename", match=MatchValue(value=filename)))
+    if user_id is not None:
+        from qdrant_client.models import Filter, FieldCondition, MatchValue
+        must.append(FieldCondition(key="user_id", match=MatchValue(value=user_id)))
+    if must:
+        from qdrant_client.models import Filter
+        query_filter = Filter(must=must)
 
     points, _ = client.scroll(
         collection_name=settings.QDRANT_COLLECTION,

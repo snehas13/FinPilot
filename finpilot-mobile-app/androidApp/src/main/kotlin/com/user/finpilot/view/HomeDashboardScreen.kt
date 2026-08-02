@@ -1,6 +1,7 @@
 package com.user.finpilot.view
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
@@ -35,26 +37,80 @@ fun HomeDashboardScreen(navController: androidx.navigation.NavHostController) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp)
     ) {
-        Text("Hello, Sneha 👋", style = MaterialTheme.typography.headlineSmall)
-        Text("Here's your financial overview", style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(16.dp))
-
-        when (val s = state) {
-            is UiState.Loading -> Box(Modifier.fillMaxWidth().height(200.dp), Alignment.Center) {
-                CircularProgressIndicator()
+        // Modern Header with Gradient
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer)
+                    )
+                )
+                .padding(24.dp),
+            contentAlignment = Alignment.BottomStart
+        ) {
+            Column {
+                Text(
+                    "Hello, Sneha 👋",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+                Text(
+                    "Here's your financial overview",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                )
             }
-            is UiState.Error -> Text("Couldn't load your summary: ${s.message}", color = Color.Red)
-            is UiState.Success -> FinancialHealthCard(s.data)
         }
 
-        Spacer(Modifier.height(24.dp))
-        Text("Quick Actions", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(12.dp))
+        Column(modifier = Modifier.padding(16.dp)) {
+            when (val s = state) {
+                is UiState.Loading -> Box(Modifier.fillMaxWidth().height(200.dp), Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+                is UiState.Empty -> Box(
+                    Modifier.fillMaxWidth().height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Filled.Description,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "No statements uploaded yet.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        TextButton(onClick = { navController.navigate("upload") }) {
+                            Text("Upload Now")
+                        }
+                    }
+                }
+                is UiState.Error -> Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        "Couldn't load your summary: ${s.message}",
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+                is UiState.Success -> FinancialHealthCard(s.data)
+            }
 
-        QuickActionsGrid(navController)
+            Spacer(Modifier.height(24.dp))
+            Text("Quick Actions", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(12.dp))
+
+            QuickActionsGrid(navController)
+        }
     }
 }
 
@@ -104,27 +160,38 @@ fun QuickActionCard(action: QuickAction, navController: androidx.navigation.NavH
 }
 @Composable
 fun FinancialHealthCard(summary: FinancialSummaryResponse) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text("Financial Health Score", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(12.dp))
             HealthScoreGauge(score = summary.health_score)
+            Spacer(Modifier.height(12.dp))
             Text(
                 when {
                     summary.health_score >= 70 -> "You're doing great! Keep it up."
                     summary.health_score >= 40 -> "There's room to improve."
                     else -> "Let's work on a plan together."
                 },
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Medium
             )
-            Spacer(Modifier.height(12.dp))
+            summary.biggest_category?.let {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Top Category: ${it.category} (${it.percent_of_total.toInt()}%)",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            HorizontalDivider(Modifier.padding(vertical = 16.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 StatColumn("Income", "₹${summary.monthly_income.toInt()}")
                 StatColumn("Expenses", "₹${summary.monthly_expenses.toInt()}")
                 StatColumn("Surplus", "₹${summary.surplus.toInt()}")
-            }
-            summary.biggest_category?.let {
-                Spacer(Modifier.height(12.dp))
-                Text("Biggest category: ${it.category} (${it.percent_of_total.toInt()}%)")
             }
         }
     }

@@ -68,8 +68,9 @@ def classify_goal(state: GoalPlanState) -> GoalPlanState:
 def retrieve_context(state: GoalPlanState) -> GoalPlanState:
     errors = state.get("errors", [])
     filename = state.get("filename")
+    user_id = state.get("user_id")
 
-    all_chunks = get_all_chunks(filename=filename)
+    all_chunks = get_all_chunks(filename=filename, user_id=user_id)
 
     if not all_chunks:
         income_override = state.get("monthly_income_override")

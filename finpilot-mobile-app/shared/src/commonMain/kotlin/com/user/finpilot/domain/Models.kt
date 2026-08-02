@@ -12,12 +12,12 @@ data class TransactionChunk(
 
 @Serializable
 data class UploadResponse(
-    val filename: String,
-    val status: String,
-    val pages_extracted: Int,
-    val chunks_created: Int,
+    val filename: String = "",
+    val status: String = "error",
+    val pages_extracted: Int = 0,
+    val chunks_created: Int = 0,
     val points_stored: Int = 0,
-    val chunk_preview: List<TransactionChunk>,
+    val chunk_preview: List<TransactionChunk> = emptyList(),
     val error: String? = null,
 )
 
@@ -63,15 +63,15 @@ data class CategorySpend(
 
 @Serializable
 data class FinancialSummaryResponse(
-    val monthly_income: Double,
-    val monthly_expenses: Double,
-    val surplus: Double,
-    val savings_rate_percent: Double,
-    val health_score: Int,
+    val monthly_income: Double = 0.0,
+    val monthly_expenses: Double = 0.0,
+    val surplus: Double = 0.0,
+    val savings_rate_percent: Double = 0.0,
+    val health_score: Int = 0,
     val biggest_category: CategorySpend? = null,
-    val category_breakdown: List<CategorySpend>,
-    val transaction_count: Int,
-    val income_is_estimated: Boolean,
+    val category_breakdown: List<CategorySpend> = emptyList(),
+    val transaction_count: Int = 0,
+    val income_is_estimated: Boolean = false,
 )
 
 @Serializable
@@ -106,4 +106,25 @@ data class GoalPlanResponse(
     val confidence_level: String,
     val validation_notes: String,
     val retry_count: Int,
+)
+
+@Serializable
+data class AuditLogEntry(
+    val id: Int, val interaction_type: String, val username: String?,
+    val request_summary: String, val response_summary: String,
+    val success: Boolean, val latency_ms: Int, val error_message: String?,
+    val created_at: String,
+)
+
+@Serializable
+data class PaginatedLogsResponse(val total: Int, val logs: List<AuditLogEntry>)
+
+@Serializable
+data class DailyTrendPoint(val date: String, val count: Int)
+
+@Serializable
+data class AdminMetricsResponse(
+    val total_requests: Int, val requests_by_type: Map<String, Int>,
+    val avg_latency_ms: Double, val success_rate_percent: Double,
+    val last_7_days_trend: List<DailyTrendPoint>,
 )

@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 sealed class UiState<out T> {
     object Loading : UiState<Nothing>()
+    object Empty : UiState<Nothing>()
     data class Success<T>(val data: T) : UiState<T>()
     data class Error(val message: String) : UiState<Nothing>()
 }
@@ -28,9 +29,18 @@ class HomeViewModel(
             _summaryState.value = UiState.Loading
             try {
                 val result = api.chatSummary(statementFilename)
-                _summaryState.value = UiState.Success(result)
+                if (result.transaction_count == 0) {
+                    _summaryState.value = UiState.Empty
+                } else {
+                    _summaryState.value = UiState.Success(result)
+                }
             } catch (e: Exception) {
-                _summaryState.value = UiState.Error(e.message ?: "Failed to load summary")
+                val msg = e.message ?: ""
+                if (msg.contains("404") || msg.contains("No data") || msg.contains("empty") || msg.contains("end of stream")) {
+                    _summaryState.value = UiState.Empty
+                } else {
+                    _summaryState.value = UiState.Error(e.message ?: "Failed to load summary")
+                }
             }
         }
     }

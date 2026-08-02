@@ -9,14 +9,20 @@ from app.core.security import hash_password, verify_password, create_access_toke
 router = APIRouter()
 
 
+def validate_signup_request(username: str, password: str) -> str:
+    cleaned_username = username.strip().lower()
+
+    if len(cleaned_username) < 3:
+        raise HTTPException(status_code=400, detail="Username must be at least 3 characters.")
+    if len(password) < 3:
+        raise HTTPException(status_code=400, detail="Password must be at least 3 characters.")
+
+    return cleaned_username
+
+
 @router.post("/signup", response_model=TokenResponse)
 async def signup(req: SignupRequest, db: Session = Depends(get_db)):
-    username = req.username.strip().lower()
-
-    if len(username) < 3:
-        raise HTTPException(status_code=400, detail="Username must be at least 3 characters.")
-    if len(req.password) < 6:
-        raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
+    username = validate_signup_request(req.username, req.password)
 
     existing = db.query(User).filter(User.username == username).first()
     if existing:
@@ -30,7 +36,7 @@ async def signup(req: SignupRequest, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=409, detail="That username is already taken.")
 
-    token = create_access_token(username)
+    token = create_access_token(username, user.id)
     return TokenResponse(access_token=token, username=username)
 
 
@@ -44,5 +50,5 @@ async def login(req: LoginRequest, db: Session = Depends(get_db)):
     if not user or not verify_password(req.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect username or password.")
 
-    token = create_access_token(username)
+    token = create_access_token(username, user.id)
     return TokenResponse(access_token=token, username=username)

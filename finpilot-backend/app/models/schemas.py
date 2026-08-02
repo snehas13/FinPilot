@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 
 class TransactionChunk(BaseModel):
@@ -93,3 +93,32 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     username: str
+
+class AuditLogOut(BaseModel):
+    id: int
+    interaction_type: str
+    username: Optional[str]
+    request_summary: str
+    response_summary: str
+    success: bool
+    latency_ms: int
+    error_message: Optional[str]
+    created_at: str
+
+
+class PaginatedLogsResponse(BaseModel):
+    total: int
+    logs: List[AuditLogOut]
+
+
+class DailyTrendPoint(BaseModel):
+    date: str
+    count: int
+
+
+class AdminMetricsResponse(BaseModel):
+    total_requests: int
+    requests_by_type: Dict[str, int]
+    avg_latency_ms: float
+    success_rate_percent: float
+    last_7_days_trend: List[DailyTrendPoint]

@@ -3,9 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.models.db import User, init_db
-from app.routers import upload, analyze, chat, goal_plan, auth
+from app.routers import upload, analyze, chat, goal_plan, auth, admin
+from app.routers.errors import http_exception_handler, jwt_error_handler
+from jose import JWTError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 app = FastAPI(title=settings.APP_NAME, version="0.1.0")
+
+app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+app.add_exception_handler(JWTError, jwt_error_handler)
 
 @app.on_event("startup")
 def on_startup():
@@ -31,3 +37,6 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 @app.get("/health")
 def health():
     return {"status": "ok", "env": settings.ENV}
+
+
+app.include_router(admin.router, prefix="/admin", tags=["admin"])

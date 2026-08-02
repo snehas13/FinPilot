@@ -1,10 +1,13 @@
 package com.user.finpilot.viewmodel
 
+import com.user.finpilot.Constants
+import com.user.finpilot.domain.TokenStore
 import com.user.finpilot.domain.UploadResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.Headers
@@ -16,7 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class UploadViewModel(
     private val client: HttpClient,
-    private val baseUrl: String = "http://10.0.2.2:8000",
+    private val baseUrl: String = Constants.BASE_URL,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -28,6 +31,7 @@ class UploadViewModel(
             _state.value = UiState.Loading
             try {
                 val response: UploadResponse = client.post("$baseUrl/upload") {
+                    TokenStore.token?.let { header(HttpHeaders.Authorization, "Bearer $it") }
                     setBody(MultiPartFormDataContent(formData {
                         append("file", fileBytes, Headers.build {
                             append(HttpHeaders.ContentDisposition, "filename=\"$filename\"")
