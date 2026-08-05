@@ -35,7 +35,20 @@ Built as a capstone project demonstrating retrieval-augmented generation, agenti
 
 > To use these images: save your app screenshots into `docs/screenshots/` in the repo with the filenames referenced above (or update the paths to match your own naming).
 
+**Demo & Presentation**
+
+- **Presentation (PPTX):** [FinPilot_AI_Presentation.pptx](docs/FinPilot_AI_Presentation.pptx) — a short slide deck summarizing the app, architecture, and evaluation results.
+- **Demo Video:** [video.mp4](docs/video.mp4) — a screen-recorded walkthrough demonstrating the Android app, upload flow, AI Coach, and Goal Planner.
+
+> You can preview the PPTX in PowerPoint or Google Slides; play `docs/video.mp4` with any media player.
+
 ---
+
+Demo Video (separate)
+
+- **Demo Video file:** [video.mp4](docs/video.mp4) — a screen-recorded walkthrough demonstrating the Android app, upload flow, AI Coach, and Goal Planner. The video file is provided separately in the `docs/` folder and is not required to be embedded in the PPTX.
+
+If you want the video shown inside the presentation, open `docs/FinPilot_AI_Presentation.pptx` in PowerPoint and insert the video manually (Insert → Video → This Device) on the desired slide (e.g., slide 4).
 
 ## Architecture
 
