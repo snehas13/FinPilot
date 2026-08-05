@@ -119,6 +119,65 @@ class UserScopingTests(unittest.TestCase):
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].chunk_id, "c1")
 
+    def test_get_logs_filters_by_current_user(self):
+        import asyncio
+        from app.routers.admin import get_logs
+        from app.models.db import AuditLog
+
+        class FakeQuery:
+            def __init__(self, rows):
+                self.rows = rows
+                self.filters = []
+
+            def filter(self, expr):
+                self.filters.append(expr)
+                return self
+
+            def count(self):
+                return len(self.rows)
+
+            def order_by(self, *args, **kwargs):
+                return self
+
+            def offset(self, offset):
+                return self
+
+            def limit(self, limit):
+                return self
+
+            def all(self):
+                return self.rows
+
+        class FakeDB:
+            def __init__(self, query_obj):
+                self.query_obj = query_obj
+
+            def query(self, model):
+                self.model = model
+                return self.query_obj
+
+        user = types.SimpleNamespace(id=42)
+        row = types.SimpleNamespace(
+            id=1,
+            interaction_type="chat",
+            username="bob",
+            request_summary="request",
+            response_summary="response",
+            success=True,
+            latency_ms=10,
+            error_message=None,
+            created_at=None,
+        )
+        fake_query = FakeQuery([row])
+        fake_db = FakeDB(fake_query)
+
+        result = asyncio.run(get_logs(None, 20, 0, fake_db, user))
+
+        self.assertEqual(result.total, 1)
+        self.assertEqual(result.logs[0].id, 1)
+        self.assertEqual(len(fake_query.filters), 1)
+        self.assertIn("user_id", str(fake_query.filters[0]))
+
     def test_analyze_uses_user_scope_and_logs(self):
         from app.routers.analyze import analyze
         from app.models.schemas import AnalyzeRequest

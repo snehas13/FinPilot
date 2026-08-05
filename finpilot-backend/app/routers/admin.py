@@ -1,11 +1,15 @@
 from datetime import datetime, timedelta
 from typing import Optional
 
+from datetime import datetime, timedelta
+from typing import Optional
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.models.db import AuditLog, get_db
+from app.core.security import get_current_user
+from app.models.db import AuditLog, User, get_db
 from app.models.schemas import AuditLogOut, PaginatedLogsResponse, AdminMetricsResponse, DailyTrendPoint
 
 router = APIRouter()
@@ -17,11 +21,13 @@ async def get_logs(
     limit: int = Query(20, le=100),
     offset: int = 0,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     query = db.query(AuditLog)
     if interaction_type:
         query = query.filter(AuditLog.interaction_type == interaction_type)
 
+    query = query.filter(AuditLog.user_id == current_user.id)
     total = query.count()
     rows = query.order_by(AuditLog.created_at.desc()).offset(offset).limit(limit).all()
 
@@ -62,22 +68,26 @@ async def get_logs(
 
 
 @router.get("/metrics", response_model=AdminMetricsResponse)
-async def get_metrics(db: Session = Depends(get_db)):
-    total_requests = db.query(AuditLog).count()
+async def get_metrics(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    query = db.query(AuditLog).filter(AuditLog.user_id == current_user.id)
+    total_requests = query.count()
 
     by_type_rows = (
-        db.query(AuditLog.interaction_type, func.count(AuditLog.id))
+        query.with_entities(AuditLog.interaction_type, func.count(AuditLog.id))
         .group_by(AuditLog.interaction_type).all()
     )
     by_type = {t: c for t, c in by_type_rows}
 
-    avg_latency = db.query(func.avg(AuditLog.latency_ms)).scalar() or 0
-    success_count = db.query(AuditLog).filter(AuditLog.success == True).count()  # noqa: E712
+    avg_latency = query.with_entities(func.avg(AuditLog.latency_ms)).scalar() or 0
+    success_count = query.filter(AuditLog.success == True).count()  # noqa: E712
     success_rate = (success_count / total_requests * 100) if total_requests > 0 else 100.0
 
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
     trend_rows = (
-        db.query(func.date(AuditLog.created_at), func.count(AuditLog.id))
+        query.with_entities(func.date(AuditLog.created_at), func.count(AuditLog.id))
         .filter(AuditLog.created_at >= seven_days_ago)
         .group_by(func.date(AuditLog.created_at))
         .order_by(func.date(AuditLog.created_at)).all()
